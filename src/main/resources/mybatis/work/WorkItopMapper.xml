@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nicegoose.project.work.mapper.WorkItopMapper">
+    
+    <resultMap type="WorkItop" id="WorkItopResult">
+        <result property="UserRequestId"    column="user_request_id"    />
+        <result property="hyperlink"    column="hyperlink"    />
+        <result property="reportDate"    column="report_date"    />
+        <result property="callerName"    column="caller_name"    />
+        <result property="servicefamilyName"    column="servicefamily_name"    />
+        <result property="serviceName"    column="service_name"    />
+        <result property="title"    column="title"    />
+        <result property="region"    column="region"    />
+    </resultMap>
+
+    <sql id="selectWorkItopVo">
+        select user_request_id, hyperlink, report_date, caller_name, servicefamily_name, service_name, title, region from work_itop order by report_date desc
+    </sql>
+
+    <select id="selectWorkItopList" parameterType="WorkItop" resultMap="WorkItopResult">
+        <include refid="selectWorkItopVo"/>
+        <where>  
+            <if test="UserRequestId != null "> and user_request_id = #{UserRequestId}</if>
+            <if test="hyperlink != null  and hyperlink != ''"> and hyperlink = #{hyperlink}</if>
+            <if test="reportDate != null  and reportDate != ''"> and report_date = #{reportDate}</if>
+            <if test="callerName != null  and callerName != ''"> and caller_name like concat('%', #{callerName}, '%')</if>
+            <if test="servicefamilyName != null  and servicefamilyName != ''"> and servicefamily_name like concat('%', #{servicefamilyName}, '%')</if>
+            <if test="serviceName != null  and serviceName != ''"> and service_name like concat('%', #{serviceName}, '%')</if>
+            <if test="title != null  and title != ''"> and title = #{title}</if>
+            <if test="region != null  and region != ''"> and region = #{region}</if>
+        </where>
+
+    </select>
+    
+    <select id="selectWorkItopByUserRequestId" parameterType="Long" resultMap="WorkItopResult">
+        <include refid="selectWorkItopVo"/>
+        where user_request_id = #{UserRequestId}
+    </select>
+        
+    <insert id="insertWorkItop" parameterType="WorkItop">
+        insert into work_itop
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="UserRequestId != null">UserRequestId,</if>
+            <if test="hyperlink != null">hyperlink,</if>
+            <if test="reportDate != null">report_date,</if>
+            <if test="callerName != null">caller_name,</if>
+            <if test="servicefamilyName != null">servicefamily_name,</if>
+            <if test="serviceName != null">service_name,</if>
+            <if test="title != null">title,</if>
+            <if test="region != null">region,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="UserRequestId != null">#{UserRequestId},</if>
+            <if test="hyperlink != null">#{hyperlink},</if>
+            <if test="reportDate != null">#{reportDate},</if>
+            <if test="callerName != null">#{callerName},</if>
+            <if test="servicefamilyName != null">#{servicefamilyName},</if>
+            <if test="serviceName != null">#{serviceName},</if>
+            <if test="title != null">#{title},</if>
+            <if test="region != null">#{region},</if>
+         </trim>
+    </insert>
+
+    <update id="updateWorkItop" parameterType="WorkItop">
+        update work_itop
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="hyperlink != null">hyperlink = #{hyperlink},</if>
+            <if test="reportDate != null">report_date = #{reportDate},</if>
+            <if test="callerName != null">caller_name = #{callerName},</if>
+            <if test="servicefamilyName != null">servicefamily_name = #{servicefamilyName},</if>
+            <if test="serviceName != null">service_name = #{serviceName},</if>
+            <if test="title != null">title = #{title},</if>
+            <if test="region != null">region = #{region},</if>
+        </trim>
+        where UserRequestId = #{UserRequestId}
+    </update>
+
+    <delete id="deleteWorkItopByUserRequestId" parameterType="Long">
+        delete from work_itop where user_request_id = #{UserRequestId}
+    </delete>
+
+    <delete id="deleteWorkItopByUserRequestIds" parameterType="String">
+        delete from work_itop where user_request_id in
+        <foreach item="UserRequestId" collection="array" open="(" separator="," close=")">
+            #{UserRequestId}
+        </foreach>
+    </delete>
+</mapper>

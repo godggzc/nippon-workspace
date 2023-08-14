@@ -1,0 +1,7 @@
+/* 编辑下面css类中的样式,最终会变成组件的内联样式 */
+.flex-layout#div-4 {
+    min-height:120px;
+    width:100%;
+    display:flex;
+    align-items:flex-start;
+}

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.nicegoose.project.work.mapper.SysUserTodosMapper">
+    
+    <resultMap type="SysUserTodos" id="SysUserTodosResult">
+        <result property="todoId"    column="todo_id"    />
+        <result property="todoName"    column="todo_name"    />
+        <result property="userId"    column="user_id"    />
+        <result property="todoComment"    column="todo_comment"    />
+        <result property="todoStatus"    column="todo_status"    />
+    </resultMap>
+
+    <sql id="selectSysUserTodosVo">
+        select todo_id, todo_name, user_id, todo_comment, todo_status from sys_user_todos
+    </sql>
+
+    <select id="selectSysUserTodosList" parameterType="SysUserTodos" resultMap="SysUserTodosResult">
+        <include refid="selectSysUserTodosVo"/>
+        <where>  
+            <if test="todoName != null  and todoName != ''"> and todo_name like concat('%', #{todoName}, '%')</if>
+            <if test="userId != null "> and user_id = #{userId}</if>
+            <if test="todoComment != null  and todoComment != ''"> and todo_comment like concat('%', #{todoComment}, '%')</if>
+            <if test="todoStatus != null  and todoStatus != ''"> and todo_status = #{todoStatus}</if>
+        </where>
+    </select>
+    
+    <select id="selectSysUserTodosByTodoId" parameterType="Long" resultMap="SysUserTodosResult">
+        <include refid="selectSysUserTodosVo"/>
+        where todo_id = #{todoId}
+    </select>
+        
+    <insert id="insertSysUserTodos" parameterType="SysUserTodos" useGeneratedKeys="true" keyProperty="todoId">
+        insert into sys_user_todos
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="todoName != null">todo_name,</if>
+            <if test="userId != null">user_id,</if>
+            <if test="todoComment != null">todo_comment,</if>
+            <if test="todoStatus != null">todo_status,</if>
+         </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="todoName != null">#{todoName},</if>
+            <if test="userId != null">#{userId},</if>
+            <if test="todoComment != null">#{todoComment},</if>
+            <if test="todoStatus != null">#{todoStatus},</if>
+         </trim>
+    </insert>
+
+    <update id="updateSysUserTodos" parameterType="SysUserTodos">
+        update sys_user_todos
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="todoName != null">todo_name = #{todoName},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="todoComment != null">todo_comment = #{todoComment},</if>
+            <if test="todoStatus != null">todo_status = #{todoStatus},</if>
+        </trim>
+        where todo_id = #{todoId}
+    </update>
+
+    <delete id="deleteSysUserTodosByTodoId" parameterType="Long">
+        DELETE FROM sys_user_todos where todo_id =#{todoId}
+    </delete>
+
+    <delete id="deleteSysUserTodosByTodoIds" parameterType="String">
+        delete from sys_user_todos where todo_id in 
+        <foreach item="todoId" collection="array" open="(" separator="," close=")">
+            #{todoId}
+        </foreach>
+    </delete>
+</mapper>
