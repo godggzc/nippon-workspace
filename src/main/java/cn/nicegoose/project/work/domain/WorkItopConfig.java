@@ -7,9 +7,9 @@ import cn.nicegoose.framework.web.domain.BaseEntity;
 
 /**
  * itop用户配置对象 work_itop_config
- * 
+ *
  * @author nicegoose
- * @date 2023-08-14
+ * @date 2023-08-17
  */
 public class WorkItopConfig extends BaseEntity
 {
@@ -30,50 +30,92 @@ public class WorkItopConfig extends BaseEntity
     @Excel(name = "所属区域")
     private String region;
 
-    public void setConfigId(Long configId) 
+    /** 用户名 */
+    @Excel(name = "用户名")
+    private String userName;
+
+    /** 是否进行同步（0停用 1正常） */
+    @Excel(name = "是否进行同步", readConverterExp = "0=停用,1=正常")
+    private Integer syncStatus;
+
+    /** 一级分类 */
+    @Excel(name = "一级分类")
+    private String servicefamilyName;
+
+    public void setConfigId(Long configId)
     {
         this.configId = configId;
     }
 
-    public Long getConfigId() 
+    public Long getConfigId()
     {
         return configId;
     }
-    public void setUserId(Long userId) 
+    public void setUserId(Long userId)
     {
         this.userId = userId;
     }
 
-    public Long getUserId() 
+    public Long getUserId()
     {
         return userId;
     }
-    public void setServiceName(String serviceName) 
+    public void setServiceName(String serviceName)
     {
         this.serviceName = serviceName;
     }
 
-    public String getServiceName() 
+    public String getServiceName()
     {
         return serviceName;
     }
-    public void setRegion(String region) 
+    public void setRegion(String region)
     {
         this.region = region;
     }
 
-    public String getRegion() 
+    public String getRegion()
     {
         return region;
+    }
+    public void setUserName(String userName)
+    {
+        this.userName = userName;
+    }
+
+    public String getUserName()
+    {
+        return userName;
+    }
+    public void setSyncStatus(Integer syncStatus)
+    {
+        this.syncStatus = syncStatus;
+    }
+
+    public Integer getSyncStatus()
+    {
+        return syncStatus;
+    }
+    public void setServicefamilyName(String servicefamilyName)
+    {
+        this.servicefamilyName = servicefamilyName;
+    }
+
+    public String getServicefamilyName()
+    {
+        return servicefamilyName;
     }
 
     @Override
     public String toString() {
         return new ToStringBuilder(this,ToStringStyle.MULTI_LINE_STYLE)
-            .append("configId", getConfigId())
-            .append("userId", getUserId())
-            .append("serviceName", getServiceName())
-            .append("region", getRegion())
-            .toString();
+                .append("configId", getConfigId())
+                .append("userId", getUserId())
+                .append("serviceName", getServiceName())
+                .append("region", getRegion())
+                .append("userName", getUserName())
+                .append("syncStatus", getSyncStatus())
+                .append("servicefamilyName", getServicefamilyName())
+                .toString();
     }
 }

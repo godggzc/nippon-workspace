@@ -80,6 +80,20 @@ public class WorkItopConfigController extends BaseController
         return toAjax(workItopConfigService.insertWorkItopConfig(workItopConfig));
     }
 
+    @PreAuthorize("@ss.hasAnyPermi('work:config:add,workspace')")
+    @Log(title = "itop用户配置", businessType = BusinessType.INSERT)
+    @PostMapping("/user")
+    public AjaxResult add1(@RequestBody WorkItopConfig workItopConfig)
+    {   Long userId = getUserId();
+        workItopConfig.setUserId(userId);
+        //先查询是否存在
+        if(workItopConfigService.selectWorkItopConfigByUserId(userId)!=null){
+            //如果存在，就更新
+            return toAjax(workItopConfigService.updateWorkItopConfig(workItopConfig));
+        }
+        return toAjax(workItopConfigService.insertWorkItopConfig(workItopConfig));
+    }
+
     /**
      * 修改itop用户配置
      */
@@ -100,5 +114,21 @@ public class WorkItopConfigController extends BaseController
     public AjaxResult remove(@PathVariable Long[] configIds)
     {
         return toAjax(workItopConfigService.deleteWorkItopConfigByConfigIds(configIds));
+    }
+
+    /**
+     * @Description: 根据登入用户查询itop用户配置
+     * @Author: Riche_Gzc
+     * @Date: 2023/8/10
+     */
+    @PreAuthorize("@ss.hasAnyPermi('work:config:query,workspace')")
+    @GetMapping(value = "/getByLoginUser")
+    public AjaxResult getByLoginUser()
+    {   Long userId = getUserId();
+        //如果workItopConfigService.selectWorkItopConfigByUserId(userId)存在
+        if(workItopConfigService.selectWorkItopConfigByUserId(userId)!=null){
+            return success(workItopConfigService.selectWorkItopConfigByUserId(userId));
+        }
+        return success();
     }
 }

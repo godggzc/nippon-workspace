@@ -1,6 +1,11 @@
 package cn.nicegoose.project.work.service.Impl;
 
 import java.util.List;
+
+import cn.nicegoose.project.work.domain.SysUserTodos;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import cn.nicegoose.project.work.mapper.WorkItopConfigMapper;
@@ -14,7 +19,7 @@ import cn.nicegoose.project.work.service.IWorkItopConfigService;
  * @date 2023-08-14
  */
 @Service
-public class WorkItopConfigServiceImpl implements IWorkItopConfigService 
+public class WorkItopConfigServiceImpl extends ServiceImpl<WorkItopConfigMapper, WorkItopConfig> implements IWorkItopConfigService
 {
     @Autowired
     private WorkItopConfigMapper workItopConfigMapper;
@@ -90,4 +95,19 @@ public class WorkItopConfigServiceImpl implements IWorkItopConfigService
     {
         return workItopConfigMapper.deleteWorkItopConfigByConfigId(configId);
     }
+
+    /**
+    * @Description: 根据用户id查询itop用户配置
+    * @Author: Riche_Gzc
+    * @Date: 2023/8/14
+    */
+    @Override
+    public WorkItopConfig selectWorkItopConfigByUserId(Long userId) {
+        QueryWrapper<WorkItopConfig> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("user_id",userId);
+
+        //使用mybatis-plus的warpper
+        return workItopConfigMapper.selectOne(queryWrapper);
+    }
+
 }

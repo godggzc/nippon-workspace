@@ -9,6 +9,14 @@ export function listItop(query) {
   })
 }
 
+export function workspace_itop_list(query) {
+  return request({
+    url: '/work/itop/workspace_itop_list',
+    method: 'get',
+    params: query
+  })
+}
+
 // 查询itop信息详细
 export function getItop(UserRequestId) {
   return request({

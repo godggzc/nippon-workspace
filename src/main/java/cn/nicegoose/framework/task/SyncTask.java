@@ -2,6 +2,8 @@ package cn.nicegoose.framework.task;
 
 
 
+import cn.nicegoose.project.work.domain.WorkItopOpen;
+import cn.nicegoose.project.work.service.IWorkItopOpenService;
 import cn.nicegoose.project.work.service.IWorkItopService;
 import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
@@ -36,7 +38,9 @@ import java.util.regex.Pattern;
 
 import cn.nicegoose.project.work.domain.WorkItop;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * @program: nippon-workspace
@@ -50,6 +54,15 @@ public class SyncTask {
 
 	@Autowired
 	private IWorkItopService workItopService;
+
+	@Autowired
+	private IWorkItopOpenService workItopOpenService;
+
+	@Value("${nicegoose.payloadPath}")
+	String payloadPath ;
+
+	@Value("${nicegoose.payloadOpenPath}")
+	String payloadOpenPath ;
 
 	public  void loginItop() throws  KeyManagementException {
 
@@ -126,6 +139,121 @@ public class SyncTask {
 		}
 	}
 
+
+	//获取itop未处理数据
+	@Transactional
+	public void getItopOepn() throws NoSuchAlgorithmException, IOException, KeyManagementException {
+		String url = "https://itop.nipponpaint.com.cn/itop/pages/ajax.render.php";
+		SSLContext sslcontext = createIgnoreVerifySSL();
+		// 设置协议http和https对应的处理socket链接工厂的对象
+		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+				.register("http", PlainConnectionSocketFactory.INSTANCE)
+				.register("https", new SSLConnectionSocketFactory(sslcontext))
+				.build();
+		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(socketFactoryRegistry);
+		HttpClients.custom().setConnectionManager(connManager);
+		Map<String, String> headers = new HashMap<>();
+		headers.put("Accept", "application/json, text/javascript, */*; q=0.01");
+		headers.put("Accept-Encoding", "gzip, deflate, br");
+		headers.put("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8,or;q=0.7,zh-TW;q=0.6");
+		headers.put("Connection", "keep-alive");
+
+		headers.put("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+		headers.put("Cookie", "itop-ca16f7092e8cdb5a03863c23dd2dc070=vgrltgnssmsrp76jrc8ufd8c34");
+		headers.put("Host", "itop.nipponpaint.com.cn");
+		headers.put("Origin", "https://itop.nipponpaint.com.cn");
+		headers.put("Referer", "https://itop.nipponpaint.com.cn/itop/pages/UI.php?c[menu]=MyShortcuts_69");
+		headers.put("Sec-Fetch-Dest", "empty");
+		headers.put("Sec-Fetch-Mode", "cors");
+		headers.put("Sec-Fetch-Site", "same-origin");
+		headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+		headers.put("X-Combodo-Ajax", "true");
+		headers.put("X-Requested-With", "XMLHttpRequest");
+		headers.put("sec-ch-ua", "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Google Chrome\";v=\"114\"");
+		headers.put("sec-ch-ua-mobile", "?0");
+		headers.put("sec-ch-ua-platform", "\"Windows\"");
+
+		File file = new File(payloadOpenPath);
+
+		FileInputStream inputStream = new FileInputStream(file);
+		int length = inputStream.available();
+		byte bytes[] = new byte[length];
+		inputStream.read(bytes);
+		inputStream.close();
+		String payload =new String(bytes, StandardCharsets.UTF_8);
+
+		//System.out.println("payload = " + payload);
+		//创建自定义的httpclient对象
+		CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager(connManager).build();
+
+		HttpPost httpPost = new HttpPost(url);
+
+		for (Map.Entry<String, String> entry : headers.entrySet()) {
+			httpPost.setHeader(entry.getKey(), entry.getValue());
+		}
+
+
+		httpPost.setEntity(new StringEntity(payload, StandardCharsets.UTF_8));
+
+
+		try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+			HttpEntity entity = response.getEntity();
+			//System.out.println("entity = " + entity);
+			if (entity != null) {
+				String responseJson = EntityUtils.toString(entity, StandardCharsets.UTF_8);
+				//使用fastjson解析json字符串
+				JSONObject jsonObject = JSONObject.parseObject(responseJson);
+				JSONArray jsonData = jsonObject.getJSONArray("data");
+				//
+				Iterator<Object> iterator = jsonData.iterator();
+				List<WorkItopOpen> itopModelList = new ArrayList<>();
+
+				while (iterator.hasNext()){
+
+					JSONObject next = (JSONObject) iterator.next();
+					WorkItopOpen itopModel = new WorkItopOpen();
+					itopModel.setUserRequestId(Long.valueOf(next.getString("UserRequest/_key_")));
+					//next.getString("UserRequest/hyperlink")用正则表达式将href="https://itop.nipponpaint.com.cn/itop/pages/UI.php?operation=details&class=UserRequest&id=239690&"提取
+					// 定义正则表达式模式
+					String pattern = "href=\"([^\"]*)\"";
+					// 将正则表达式编译为Pattern类的实例
+					Pattern r = Pattern.compile(pattern);
+					// 创建匹配器
+					Matcher m = r.matcher(next.getString("UserRequest/hyperlink"));
+					// 使用find()方法查找第一个匹配的对象
+					if (m.find()) {
+						itopModel.setHyperlink(m.group(1));
+					} else {
+						itopModel.setHyperlink("");
+
+					}
+
+					itopModel.setReportDate(next.getString("UserRequest/report_date"));
+					itopModel.setAgentName(next.getString("UserRequest/agent_name"));
+					itopModel.setServicefamilyName(next.getString("UserRequest/servicefamily_name"));
+					//如果next.getString("UserRequest/service_name")包含&amp;则替换为&
+					if (next.getString("UserRequest/service_name").contains("&amp;")){
+						itopModel.setServiceName(next.getString("UserRequest/service_name").replace("&amp;","&"));
+					}else{
+						itopModel.setServiceName(next.getString("UserRequest/service_name"));
+					}
+
+					itopModel.setTitle(next.getString("UserRequest/title"));
+					itopModel.setRegion(next.getString("UserRequest/region"));
+					//将数据存入list
+					itopModelList.add(itopModel);
+
+				}
+				workItopOpenService.remove(null);
+				workItopOpenService.saveBatch(itopModelList);
+
+			}
+		}
+	}
+
+
+	//获取itop待接单数据
+	@Transactional
 	public void getItop() throws NoSuchAlgorithmException, KeyManagementException, IOException {
 		String url = "https://itop.nipponpaint.com.cn/itop/pages/ajax.render.php";
 		SSLContext sslcontext = createIgnoreVerifySSL();
@@ -157,7 +285,7 @@ public class SyncTask {
 		headers.put("sec-ch-ua-mobile", "?0");
 		headers.put("sec-ch-ua-platform", "\"Windows\"");
 
-		File file = new File("G:\\23公司demo\\untitled1\\src\\main\\resources\\payload.txt");
+		File file = new File(payloadPath);
 
 		FileInputStream inputStream = new FileInputStream(file);
 		int length = inputStream.available();

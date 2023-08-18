@@ -2,6 +2,7 @@ package cn.nicegoose.project.work.service;
 
 import java.util.List;
 import cn.nicegoose.project.work.domain.WorkItopConfig;
+import com.baomidou.mybatisplus.extension.service.IService;
 
 /**
  * itop用户配置Service接口
@@ -9,7 +10,7 @@ import cn.nicegoose.project.work.domain.WorkItopConfig;
  * @author nicegoose
  * @date 2023-08-14
  */
-public interface IWorkItopConfigService 
+public interface IWorkItopConfigService  extends IService<WorkItopConfig>
 {
     /**
      * 查询itop用户配置
@@ -58,4 +59,11 @@ public interface IWorkItopConfigService
      * @return 结果
      */
     public int deleteWorkItopConfigByConfigId(Long configId);
+
+    /**
+     * @Description: 根据用户id查询itop用户配置
+     * @Author: Riche_Gzc
+     * @Date: 2023/8/14
+     */
+    public WorkItopConfig selectWorkItopConfigByUserId(Long userId);
 }

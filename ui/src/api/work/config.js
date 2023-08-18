@@ -8,7 +8,13 @@ export function listConfig(query) {
     params: query
   })
 }
+export function getConfigByUser() {
 
+  return request({
+    url: '/work/config/getByLoginUser',
+    method: 'get',
+  })
+}
 // 查询itop用户配置详细
 export function getConfig(configId) {
   return request({
@@ -25,6 +31,15 @@ export function addConfig(data) {
     data: data
   })
 }
+
+export function addItopConfigByUser(data) {
+  return request({
+    url: '/work/config/user',
+    method: 'post',
+    data: data
+  })
+}
+
 
 // 修改itop用户配置
 export function updateConfig(data) {
