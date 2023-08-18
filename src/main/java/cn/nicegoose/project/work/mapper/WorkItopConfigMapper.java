@@ -2,6 +2,7 @@ package cn.nicegoose.project.work.mapper;
 
 import java.util.List;
 import cn.nicegoose.project.work.domain.WorkItopConfig;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
  * itop用户配置Mapper接口
@@ -9,7 +10,7 @@ import cn.nicegoose.project.work.domain.WorkItopConfig;
  * @author nicegoose
  * @date 2023-08-14
  */
-public interface WorkItopConfigMapper 
+public interface WorkItopConfigMapper  extends BaseMapper<WorkItopConfig>
 {
     /**
      * 查询itop用户配置

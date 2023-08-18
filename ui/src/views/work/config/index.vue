@@ -25,6 +25,32 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
+      <el-form-item label="用户名" prop="userName">
+        <el-input
+          v-model="queryParams.userName"
+          placeholder="请输入用户名"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
+      <el-form-item label="是否进行同步" prop="syncStatus">
+        <el-select v-model="queryParams.syncStatus" placeholder="请选择是否进行同步" clearable>
+          <el-option
+            v-for="dict in dict.type.itop_sync_status"
+            :key="dict.value"
+            :label="dict.label"
+            :value="dict.value"
+          />
+        </el-select>
+      </el-form-item>
+      <el-form-item label="一级分类" prop="servicefamilyName">
+        <el-input
+          v-model="queryParams.servicefamilyName"
+          placeholder="请输入一级分类"
+          clearable
+          @keyup.enter.native="handleQuery"
+        />
+      </el-form-item>
       <el-form-item>
         <el-button type="primary" icon="el-icon-search" size="mini" @click="handleQuery">搜索</el-button>
         <el-button icon="el-icon-refresh" size="mini" @click="resetQuery">重置</el-button>
@@ -83,6 +109,13 @@
       <el-table-column label="用户id" align="center" prop="userId" />
       <el-table-column label="二级分类" align="center" prop="serviceName" />
       <el-table-column label="所属区域" align="center" prop="region" />
+      <el-table-column label="用户名" align="center" prop="userName" />
+      <el-table-column label="是否进行同步" align="center" prop="syncStatus">
+        <template slot-scope="scope">
+          <dict-tag :options="dict.type.itop_sync_status" :value="scope.row.syncStatus"/>
+        </template>
+      </el-table-column>
+      <el-table-column label="一级分类" align="center" prop="servicefamilyName" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
           <el-button
@@ -102,7 +135,7 @@
         </template>
       </el-table-column>
     </el-table>
-    
+
     <pagination
       v-show="total>0"
       :total="total"
@@ -123,6 +156,21 @@
         <el-form-item label="所属区域" prop="region">
           <el-input v-model="form.region" placeholder="请输入所属区域" />
         </el-form-item>
+        <el-form-item label="用户名" prop="userName">
+          <el-input v-model="form.userName" placeholder="请输入用户名" />
+        </el-form-item>
+        <el-form-item label="是否进行同步" prop="syncStatus">
+          <el-radio-group v-model="form.syncStatus">
+            <el-radio
+              v-for="dict in dict.type.itop_sync_status"
+              :key="dict.value"
+              :label="parseInt(dict.value)"
+            >{{dict.label}}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="一级分类" prop="servicefamilyName">
+          <el-input v-model="form.servicefamilyName" placeholder="请输入一级分类" />
+        </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button type="primary" @click="submitForm">确 定</el-button>
@@ -137,6 +185,7 @@ import { listConfig, getConfig, delConfig, addConfig, updateConfig } from "@/api
 
 export default {
   name: "Config",
+  dicts: ['itop_sync_status'],
   data() {
     return {
       // 遮罩层
@@ -163,12 +212,21 @@ export default {
         pageSize: 10,
         userId: null,
         serviceName: null,
-        region: null
+        region: null,
+        userName: null,
+        syncStatus: null,
+        servicefamilyName: null
       },
       // 表单参数
       form: {},
       // 表单校验
       rules: {
+        syncStatus: [
+          { required: true, message: "是否进行同步不能为空", trigger: "change" }
+        ],
+        servicefamilyName: [
+          { required: true, message: "一级分类不能为空", trigger: "blur" }
+        ]
       }
     };
   },
@@ -196,7 +254,10 @@ export default {
         configId: null,
         userId: null,
         serviceName: null,
-        region: null
+        region: null,
+        userName: null,
+        syncStatus: null,
+        servicefamilyName: null
       };
       this.resetForm("form");
     },

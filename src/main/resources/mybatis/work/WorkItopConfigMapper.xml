@@ -9,18 +9,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="userId"    column="user_id"    />
         <result property="serviceName"    column="service_name"    />
         <result property="region"    column="region"    />
+        <result property="userName"    column="user_name"    />
+        <result property="syncStatus"    column="sync_status"    />
+        <result property="servicefamilyName"    column="servicefamily_name"    />
     </resultMap>
 
     <sql id="selectWorkItopConfigVo">
-        select config_id, user_id, service_name, region from work_itop_config
+        select config_id, user_id, service_name, region, user_name, sync_status,servicefamily_name  from work_itop_config
     </sql>
 
     <select id="selectWorkItopConfigList" parameterType="WorkItopConfig" resultMap="WorkItopConfigResult">
         <include refid="selectWorkItopConfigVo"/>
-        <where>  
+        <where>
             <if test="userId != null "> and user_id = #{userId}</if>
             <if test="serviceName != null  and serviceName != ''"> and service_name like concat('%', #{serviceName}, '%')</if>
             <if test="region != null  and region != ''"> and region = #{region}</if>
+            <if test="userName != null  and userName != ''"> and user_name like concat('%', #{userName}, '%')</if>
+            <if test="syncStatus != null ">
+             and sync_status = #{syncStatus}</if>
+            <if test="servicefamilyName != null   "> and servicefamily_name like concat('%', #{servicefamilyName}, '%')</if>
         </where>
     </select>
     
@@ -28,21 +35,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <include refid="selectWorkItopConfigVo"/>
         where config_id = #{configId}
     </select>
-        
-    <insert id="insertWorkItopConfig" parameterType="WorkItopConfig">
+
+    <insert id="insertWorkItopConfig" parameterType="WorkItopConfig" useGeneratedKeys="true" keyProperty="configId">
         insert into work_itop_config
         <trim prefix="(" suffix=")" suffixOverrides=",">
-            <if test="configId != null">config_id,</if>
             <if test="userId != null">user_id,</if>
             <if test="serviceName != null">service_name,</if>
             <if test="region != null">region,</if>
-         </trim>
+            <if test="userName != null">user_name,</if>
+            <if test="syncStatus != null">sync_status,</if>
+            <if test="servicefamilyName != null  ">servicefamily_name,</if>
+        </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
-            <if test="configId != null">#{configId},</if>
             <if test="userId != null">#{userId},</if>
             <if test="serviceName != null">#{serviceName},</if>
             <if test="region != null">#{region},</if>
-         </trim>
+            <if test="userName != null">#{userName},</if>
+            <if test="syncStatus != null">#{syncStatus},</if>
+            <if test="servicefamilyName != null  ">servicefamily_name,</if>
+        </trim>
     </insert>
 
     <update id="updateWorkItopConfig" parameterType="WorkItopConfig">
@@ -51,16 +62,20 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="userId != null">user_id = #{userId},</if>
             <if test="serviceName != null">service_name = #{serviceName},</if>
             <if test="region != null">region = #{region},</if>
+            <if test="userName != null">user_name = #{userName},</if>
+            <if test="syncStatus != null">sync_status = #{syncStatus},</if>
+            <if test="servicefamilyName != null  ">servicefamily_name = #{servicefamilyName},</if>
         </trim>
         where config_id = #{configId}
     </update>
+
 
     <delete id="deleteWorkItopConfigByConfigId" parameterType="Long">
         delete from work_itop_config where config_id = #{configId}
     </delete>
 
     <delete id="deleteWorkItopConfigByConfigIds" parameterType="String">
-        delete from work_itop_config where config_id in 
+        delete from work_itop_config where config_id in
         <foreach item="configId" collection="array" open="(" separator="," close=")">
             #{configId}
         </foreach>

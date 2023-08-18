@@ -17,6 +17,14 @@ export function listTodosByUser() {
 
   })
 }
+export function autoSetSysUserTodos() {
+
+  return request({
+    url: '/work/todos/auto',
+    method: 'get',
+
+  })
+}
 export function addTodoByUser(data) {
   return request({
     url: '/work/todos/user',
@@ -58,3 +66,10 @@ export function delTodos(todoId) {
     method: 'delete'
   })
 }
+export function deleteSysUserTodosByUserId() {
+  return request({
+    url: '/work/todos/user' ,
+    method: 'delete'
+  })
+}
+

@@ -1,9 +1,14 @@
 package cn.nicegoose.project.work.controller;
 
-import java.util.List;
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 
 import cn.nicegoose.framework.aspectj.lang.annotation.Anonymous;
+import cn.nicegoose.project.work.domain.WorkItopConfig;
+import cn.nicegoose.project.work.domain.WorkItopOpen;
+import cn.nicegoose.project.work.service.IWorkItopConfigService;
+import cn.nicegoose.project.work.service.IWorkItopOpenService;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +40,12 @@ public class SysUserTodosController extends BaseController
 {
     @Autowired
     private ISysUserTodosService sysUserTodosService;
+
+    @Autowired
+    private IWorkItopOpenService workItopOpenService;
+
+    @Autowired
+    private IWorkItopConfigService workItopConfigService;
 
     /**
      * 查询代做事项列表
@@ -129,5 +140,84 @@ public class SysUserTodosController extends BaseController
         Long userId = getUserId();
         return success(sysUserTodosService.selectSysUserTodosByUserId(userId));
     }
+
+    /**
+    * @Description: 自动设置代办事项
+    * @Author: Riche_Gzc
+    * @Date: 2023/8/15
+    */
+    @PreAuthorize("@ss.hasPermi('workspace')")
+    @GetMapping(value = "/auto")
+    public AjaxResult autoSetSysUserTodos()
+    {
+        Long userId = getUserId();
+        //获取配置信息
+        WorkItopConfig config = workItopConfigService.selectWorkItopConfigByUserId(userId);
+        if (config == null){
+            return success("没有配置信息");
+        }
+        //如果config.getSyncStatus() == 1 则同步
+        if(config.getSyncStatus() == 1&&config.getUserName()!=null){
+            //新new一个wrapper
+            QueryWrapper<WorkItopOpen> queryWrapper = new QueryWrapper<>();
+            if (Objects.equals(config.getUserName(), "")) {
+              return success("没有配置信息");
+            }
+            //设置查询条件
+            queryWrapper.eq("agent_name",config.getUserName());
+            //查询
+            List<WorkItopOpen> list = workItopOpenService.list(queryWrapper);
+            //创建一个Todolist
+            List<SysUserTodos> todolist = sysUserTodosService.selectSysUserTodosByUserId(userId);
+            List<SysUserTodos> newtodolist = new ArrayList<>();
+            for (WorkItopOpen workItopOpen : list) {
+                SysUserTodos newtodo = new SysUserTodos();
+                newtodo.setTodoName("itop:" + workItopOpen.getTitle());
+                newtodo.setTodoComment(workItopOpen.getHyperlink());
+                newtodo.setUserId(userId);
+                newtodo.setTodoStatus("0");
+                newtodolist.add(newtodo);
+                for (SysUserTodos sysUserTodos : todolist) {
+                    if (sysUserTodos.getTodoComment() != null && sysUserTodos.getTodoName().startsWith("itop:")) {
+                        if (sysUserTodos.getTodoName().equals(newtodo.getTodoName())) {
+                            newtodolist.remove(newtodo);
+                            sysUserTodos.setTodoStatus("存在");
+                        }
+                    }
+                }
+            }
+            sysUserTodosService.saveBatch(newtodolist);
+            for (SysUserTodos sysUserTodos : todolist) {
+                if(sysUserTodos.getTodoStatus().equals("存在")){
+                    sysUserTodos.setTodoStatus("0");
+                    sysUserTodosService.updateSysUserTodos(sysUserTodos);
+                }else{
+                    if (!Objects.equals(sysUserTodos.getTodoComment(), "") && sysUserTodos.getTodoName().startsWith("itop:")) {
+                    sysUserTodos.setTodoStatus("1");
+                    sysUserTodosService.updateSysUserTodos(sysUserTodos);}
+                }
+            }
+            return success("同步成功");
+        }
+
+        return success();
+    }
+
+    /**
+    * @Description: 根据用户id删除已完成的代办事项
+    * @Author: Riche_Gzc
+    * @Date: 2023/8/16
+    */
+    @PreAuthorize("@ss.hasPermi('workspace')")
+    @DeleteMapping(value = "/user")
+    public AjaxResult deleteSysUserTodosByUserId()
+    {
+       QueryWrapper<SysUserTodos> queryWrapper = new QueryWrapper<>();
+         queryWrapper.eq("user_id",getUserId());
+        queryWrapper.eq("todo_status","1");
+        return toAjax(sysUserTodosService.remove(queryWrapper));
+    }
+
+
 
 }

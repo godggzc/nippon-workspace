@@ -1,7 +1,10 @@
 package cn.nicegoose.project.work.controller;
 
+import java.util.Arrays;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,6 +47,95 @@ public class WorkItopController extends BaseController
         startPage();
         List<WorkItop> list = workItopService.selectWorkItopList(workItop);
         return getDataTable(list);
+    }
+    @PreAuthorize("@ss.hasAnyPermi('work:itop:list,workspace')")
+    @GetMapping("/workspace_itop_list")
+    public AjaxResult workspace_list(WorkItop workItop)
+    {   //先new一个query
+        QueryWrapper<WorkItop> queryWrapper = new QueryWrapper<>();
+        //然后解析workItop的serviceName
+        String serviceName = workItop.getServiceName();
+        //如果serviceName不为空，尝试通过+号分割
+        if(serviceName!=null){
+            String[] serviceNameList = serviceName.split("\\+");
+            //如果分割后的数组长度大于1，说明有多个serviceName
+            if(serviceNameList.length>1){
+                //遍历数组，将每个serviceName都加入到queryWrapper中
+                queryWrapper.and( wrapper -> {
+                    for(String serviceNameItem:serviceNameList){
+                        //如果是第一个，就用eq，否则用or
+                        if(serviceNameItem.equals(serviceNameList[0])){
+                            wrapper.like("service_name",serviceNameItem);
+                        }else{
+                            wrapper.or().like("service_name",serviceNameItem);
+                        }
+
+                    }
+                });
+        }else{
+                //如果分割后的数组长度等于1，说明只有一个serviceName
+                queryWrapper.and( wrapper -> wrapper.like("service_name",serviceName) );
+
+            }
+        };
+
+        //然后解析workItop的region
+        String region = workItop.getRegion();
+        //如果region不为空，尝试通过+号分割
+        if(region!=null){
+            String[] regionList = region.split("\\+");
+           // System.out.println("regionList = " + Arrays.toString(regionList));
+            //如果分割后的数组长度大于1，说明有多个region
+            if(regionList.length>1){
+                //遍历数组，将每个region都加入到queryWrapper中
+                queryWrapper.and( wrapper -> {
+                    for(String regionItem:regionList){
+                        //如果是第一个，就用eq，否则用or
+                        if(regionItem.equals(regionList[0])){
+                            wrapper.like("region",regionItem);
+                        }else{
+                            wrapper.or().like("region",regionItem);
+                        }
+                        wrapper.or().eq("region","");
+                    }
+                });
+            }else{
+                //如果分割后的数组长度等于1，说明只有一个region
+                queryWrapper.and( wrapper -> wrapper.like("region",region).or().eq("region","") );
+
+            }
+        };
+        queryWrapper.orderByDesc("user_request_id");
+
+        //解析servicefamilyName
+        String servicefamilyName = workItop.getServicefamilyName();
+        //如果servicefamilyName不为空，尝试通过+号分割
+        if(servicefamilyName!=null){
+            String[] servicefamilyNameList = servicefamilyName.split("\\+");
+            //如果分割后的数组长度大于1，说明有多个servicefamilyName
+            if(servicefamilyNameList.length>1){
+                //遍历数组，将每个servicefamilyName都加入到queryWrapper中
+                queryWrapper.and( wrapper -> {
+                    for(String servicefamilyNameItem:servicefamilyNameList){
+                        //如果是第一个，就用eq，否则用or
+                        if(servicefamilyNameItem.equals(servicefamilyNameList[0])){
+                            wrapper.like("servicefamily_name",servicefamilyNameItem);
+                        }else{
+                            wrapper.or().like("servicefamily_name",servicefamilyNameItem);
+                        }
+                        wrapper.or().eq("servicefamily_name","");
+                    }
+                });
+            }else{
+                //如果分割后的数组长度等于1，说明只有一个servicefamilyName
+                queryWrapper.and( wrapper -> wrapper.like("servicefamily_name",servicefamilyName).or().eq("servicefamily_name","") );
+
+            }
+        };
+
+        //解析完成后，将queryWrapper传入selectList方法
+        List<WorkItop> list = workItopService.list(queryWrapper);
+        return success(list);
     }
 
     /**

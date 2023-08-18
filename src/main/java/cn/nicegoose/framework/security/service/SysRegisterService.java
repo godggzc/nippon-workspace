@@ -14,6 +14,7 @@ import cn.nicegoose.framework.redis.RedisCache;
 import cn.nicegoose.framework.security.RegisterBody;
 import cn.nicegoose.project.system.domain.SysUser;
 import cn.nicegoose.project.system.service.ISysConfigService;
+import cn.nicegoose.project.system.service.ISysRoleService;
 import cn.nicegoose.project.system.service.ISysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,9 @@ public class SysRegisterService
 
     @Autowired
     private RedisCache redisCache;
+
+    @Autowired
+    private ISysRoleService roleService;
 
     /**
      * 注册
@@ -78,15 +82,23 @@ public class SysRegisterService
             sysUser.setNickName(username);
             sysUser.setPassword(SecurityUtils.encryptPassword(password));
             boolean regFlag = userService.registerUser(sysUser);
+
             if (!regFlag)
             {
                 msg = "注册失败,请联系系统管理人员";
             }
             else
-            {
+            {   //注册成功后，记录日志
                 AsyncManager.me().execute(AsyncFactory.recordLogininfor(username, Constants.REGISTER, MessageUtils.message("user.register.success")));
+                //查询用户id
+                Long userId = userService.selectUserByUserName(username).getUserId();
+                //给用户赋予普通用户角色
+                Long[] userIds = {userId};
+                roleService.insertAuthUsers(3L,userIds);
             }
         }
+
+
         return msg;
     }
 

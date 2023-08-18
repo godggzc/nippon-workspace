@@ -1,14 +1,6 @@
 <template>
   <div class="app-container">
     <el-form :model="queryParams" ref="queryForm" size="small" :inline="true" v-show="showSearch" label-width="68px">
-      <el-form-item label="请求编号" prop="UserRequestId">
-        <el-input
-          v-model="queryParams.UserRequestId"
-          placeholder="请输入请求编号"
-          clearable
-          @keyup.enter.native="handleQuery"
-        />
-      </el-form-item>
       <el-form-item label="itop链接" prop="hyperlink">
         <el-input
           v-model="queryParams.hyperlink"
@@ -25,10 +17,10 @@
           @keyup.enter.native="handleQuery"
         />
       </el-form-item>
-      <el-form-item label="用户名称" prop="callerName">
+      <el-form-item label="所有人名称" prop="agentName">
         <el-input
-          v-model="queryParams.callerName"
-          placeholder="请输入用户名称"
+          v-model="queryParams.agentName"
+          placeholder="请输入所有人名称"
           clearable
           @keyup.enter.native="handleQuery"
         />
@@ -79,7 +71,7 @@
           icon="el-icon-plus"
           size="mini"
           @click="handleAdd"
-          v-hasPermi="['work:itop:add']"
+          v-hasPermi="['work:itopOpen:add']"
         >新增</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -90,7 +82,7 @@
           size="mini"
           :disabled="single"
           @click="handleUpdate"
-          v-hasPermi="['work:itop:edit']"
+          v-hasPermi="['work:itopOpen:edit']"
         >修改</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -101,7 +93,7 @@
           size="mini"
           :disabled="multiple"
           @click="handleDelete"
-          v-hasPermi="['work:itop:remove']"
+          v-hasPermi="['work:itopOpen:remove']"
         >删除</el-button>
       </el-col>
       <el-col :span="1.5">
@@ -111,22 +103,18 @@
           icon="el-icon-download"
           size="mini"
           @click="handleExport"
-          v-hasPermi="['work:itop:export']"
+          v-hasPermi="['work:itopOpen:export']"
         >导出</el-button>
       </el-col>
       <right-toolbar :showSearch.sync="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
-    <el-table v-loading="loading" :data="itopList" @selection-change="handleSelectionChange">
+    <el-table v-loading="loading" :data="itopOpenList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-
-      <el-table-column label="请求编号" align="center" prop="userRequestId" >
-        <template slot-scope="scope">
-          <a :href="scope.row.hyperlink" target="_blank" style="color: #00afff">{{scope.row.userRequestId}}</a>
-        </template>
-      </el-table-column>
+      <el-table-column label="请求编号" align="center" prop="userRequestId" />
+      <el-table-column label="itop链接" align="center" prop="hyperlink" />
       <el-table-column label="请求时间" align="center" prop="reportDate" />
-      <el-table-column label="用户名称" align="center" prop="callerName" />
+      <el-table-column label="所有人名称" align="center" prop="agentName" />
       <el-table-column label="一级分类" align="center" prop="servicefamilyName" />
       <el-table-column label="二级分类" align="center" prop="serviceName" />
       <el-table-column label="标题" align="center" prop="title" />
@@ -138,19 +126,19 @@
             type="text"
             icon="el-icon-edit"
             @click="handleUpdate(scope.row)"
-            v-hasPermi="['work:itop:edit']"
+            v-hasPermi="['work:itopOpen:edit']"
           >修改</el-button>
           <el-button
             size="mini"
             type="text"
             icon="el-icon-delete"
             @click="handleDelete(scope.row)"
-            v-hasPermi="['work:itop:remove']"
+            v-hasPermi="['work:itopOpen:remove']"
           >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-
+    
     <pagination
       v-show="total>0"
       :total="total"
@@ -159,8 +147,7 @@
       @pagination="getList"
     />
 
-
-    <!-- 添加或修改itop信息对话框 -->
+    <!-- 添加或修改itop信息未处理对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
       <el-form ref="form" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="itop链接" prop="hyperlink">
@@ -169,8 +156,8 @@
         <el-form-item label="请求时间" prop="reportDate">
           <el-input v-model="form.reportDate" placeholder="请输入请求时间" />
         </el-form-item>
-        <el-form-item label="用户名称" prop="callerName">
-          <el-input v-model="form.callerName" placeholder="请输入用户名称" />
+        <el-form-item label="所有人名称" prop="agentName">
+          <el-input v-model="form.agentName" placeholder="请输入所有人名称" />
         </el-form-item>
         <el-form-item label="一级分类" prop="servicefamilyName">
           <el-input v-model="form.servicefamilyName" placeholder="请输入一级分类" />
@@ -190,16 +177,14 @@
         <el-button @click="cancel">取 消</el-button>
       </div>
     </el-dialog>
-
-
   </div>
 </template>
 
 <script>
-import { listItop, getItop, delItop, addItop, updateItop } from "@/api/work/itop";
+import { listItopOpen, getItopOpen, delItopOpen, addItopOpen, updateItopOpen } from "@/api/work/itopOpen";
 
 export default {
-  name: "Itop",
+  name: "ItopOpen",
   data() {
     return {
       // 遮罩层
@@ -214,8 +199,8 @@ export default {
       showSearch: true,
       // 总条数
       total: 0,
-      // itop信息表格数据
-      itopList: [],
+      // itop信息未处理表格数据
+      itopOpenList: [],
       // 弹出层标题
       title: "",
       // 是否显示弹出层
@@ -224,10 +209,9 @@ export default {
       queryParams: {
         pageNum: 1,
         pageSize: 10,
-        UserRequestId: null,
         hyperlink: null,
         reportDate: null,
-        callerName: null,
+        agentName: null,
         servicefamilyName: null,
         serviceName: null,
         title: null,
@@ -244,12 +228,11 @@ export default {
     this.getList();
   },
   methods: {
-    /** 查询itop信息列表 */
+    /** 查询itop信息未处理列表 */
     getList() {
       this.loading = true;
-      listItop(this.queryParams).then(response => {
-        this.itopList = response.rows;
-        console.log(this.itopList)
+      listItopOpen(this.queryParams).then(response => {
+        this.itopOpenList = response.rows;
         this.total = response.total;
         this.loading = false;
       });
@@ -262,10 +245,10 @@ export default {
     // 表单重置
     reset() {
       this.form = {
-        UserRequestId: null,
+        userRequestId: null,
         hyperlink: null,
         reportDate: null,
-        callerName: null,
+        agentName: null,
         servicefamilyName: null,
         serviceName: null,
         title: null,
@@ -285,7 +268,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.UserRequestId)
+      this.ids = selection.map(item => item.userRequestId)
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
@@ -293,30 +276,30 @@ export default {
     handleAdd() {
       this.reset();
       this.open = true;
-      this.title = "添加itop信息";
+      this.title = "添加itop信息未处理";
     },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const UserRequestId = row.UserRequestId || this.ids
-      getItop(UserRequestId).then(response => {
+      const userRequestId = row.userRequestId || this.ids
+      getItopOpen(userRequestId).then(response => {
         this.form = response.data;
         this.open = true;
-        this.title = "修改itop信息";
+        this.title = "修改itop信息未处理";
       });
     },
     /** 提交按钮 */
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.UserRequestId != null) {
-            updateItop(this.form).then(response => {
+          if (this.form.userRequestId != null) {
+            updateItopOpen(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
               this.getList();
             });
           } else {
-            addItop(this.form).then(response => {
+            addItopOpen(this.form).then(response => {
               this.$modal.msgSuccess("新增成功");
               this.open = false;
               this.getList();
@@ -327,9 +310,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const UserRequestIds = row.UserRequestId || this.ids;
-      this.$modal.confirm('是否确认删除itop信息编号为"' + UserRequestIds + '"的数据项？').then(function() {
-        return delItop(UserRequestIds);
+      const userRequestIds = row.userRequestId || this.ids;
+      this.$modal.confirm('是否确认删除itop信息未处理编号为"' + userRequestIds + '"的数据项？').then(function() {
+        return delItopOpen(userRequestIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
@@ -337,9 +320,9 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('work/itop/export', {
+      this.download('work/itopOpen/export', {
         ...this.queryParams
-      }, `itop_${new Date().getTime()}.xlsx`)
+      }, `itopOpen_${new Date().getTime()}.xlsx`)
     }
   }
 };
